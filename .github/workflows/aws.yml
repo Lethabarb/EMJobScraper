@@ -67,6 +67,6 @@ jobs:
         # Build a docker container and
         # push it to ECR so that it can
         # be deployed to ECS.
-        docker build . -t nswlinkextractorimage -f EmJobScraper/NswLinkExtractor/Dockerfile
+        docker build . -t nswlinkextractorimage -f NswLinkExtractor/Dockerfile
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
         echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
