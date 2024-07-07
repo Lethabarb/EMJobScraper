@@ -13,7 +13,7 @@ namespace Common.Models
         public string Url { get; set; }
         public State State { get; set; }
 
-        private JobLink(string title, string url, State state)
+        public JobLink(string title, string url, State state)
         {
             Title = title;
             Url = url;

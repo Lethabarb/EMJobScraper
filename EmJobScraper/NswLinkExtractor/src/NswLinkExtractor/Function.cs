@@ -2,6 +2,7 @@ using Amazon.Lambda.Core;
 using NswLinkExtractor.Models.Enums;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
+using OpenQA.Selenium.Interactions;
 
 // Assembly attribute to enable the Lambda function's JSON input to be converted into a .NET class.
 [assembly: LambdaSerializer(typeof(Amazon.Lambda.Serialization.SystemTextJson.DefaultLambdaJsonSerializer))]
@@ -19,17 +20,18 @@ namespace NswLinkExtractor
         /// <returns></returns>
         public async Task<string> FunctionHandler(ILambdaContext context)
         {
-            //ChromeOptions opts = new ChromeOptions();
-            //opts.AddArgument("--verbose");
-            //opts.AddArgument("--headless");
-            //opts.AddArgument("--disable-dev-shm-usage");
-            //WebDriver web = new ChromeDriver(opts);
+            ChromeOptions opts = new ChromeOptions();
+            opts.AddArguments("--headless", "--disable-gpu",
+                "--no-sandbox", "--disable-dev-shm-usage");
 
-            //await web.Navigate().GoToUrlAsync(State.NSW.getBaseLink());
+            var chromeService = ChromeDriverService.CreateDefaultService();
+            chromeService.SuppressInitialDiagnosticInformation = true;
 
-            //IWebElement element = web.FindElement(By.XPath("//*[@id=\"cmsHomeUpperContent\"]/div[2]/div[3]/div[1]/div[1]/div[1]/a/span"));
-            //string title = element.Text;
-            return "hello world";
+            WebDriver web = new ChromeDriver(chromeService, opts);
+
+            await web.Navigate().GoToUrlAsync("https://www.google.com");
+
+            return web.Title;
         }
     }
 

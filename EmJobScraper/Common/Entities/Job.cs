@@ -15,7 +15,7 @@ namespace Common.Entities
         public State State { get; set; }
         public string Organization { get; set; }
         public DateOnly ClosureDate { get; set; }
-        public double DateValue 
+        public double DateValue
         {
             get
             {

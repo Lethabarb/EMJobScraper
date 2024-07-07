@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Common.Models.Readers;
+using OpenQA.Selenium;
 
 namespace Common.Models.Enums
 {
@@ -30,6 +27,67 @@ namespace Common.Models.Enums
                     return "";
                 case State.FED:
                     return "https://www.apsjobs.gov.au/s/";
+            }
+            throw new Exception("not a state");
+        }
+
+        public static StateLinkReader GetLinkReader(this State state)
+        {
+            switch (state)
+            {
+                case State.NSW:
+                    return new StateLinkReader()
+                    {
+                        JobCard = By.XPath("//*[@id=\"cmsHomeUpperContent\"]/div[2]/div[3]/div[1]/div"),
+                        Url = By.TagName("a"),
+                        Title = By.TagName("span")
+                    };
+                case State.QLD:
+                    throw new NotImplementedException();
+                case State.VIC:
+                    throw new NotImplementedException();
+                case State.ACT:
+                    throw new NotImplementedException();
+                case State.NT:
+                    throw new NotImplementedException();
+                case State.SA:
+                    throw new NotImplementedException();
+                case State.WA:
+                    throw new NotImplementedException();
+                case State.TAS:
+                    throw new NotImplementedException();
+                case State.FED:
+                    throw new NotImplementedException();
+            }
+            throw new Exception("not a state");
+        }
+        public static StateJobReader GetJobReader(this State state)
+        {
+            switch (state)
+            {
+                case State.NSW:
+                    return new StateJobReader()
+                    {
+                        Title = By.XPath("//*[@id=\"main-content\"]/div/div[1]/div[3]/div/div[2]/h1"),
+                        Salary = By.XPath("//*[@id=\"main-content\"]/div/div[1]/div[3]/div/div[2]/div[3]"),
+                        Table = By.XPath("//*[@id=\"main-content\"]/div/div[1]/div[3]/div/div[2]/div[2]/div/table/tbody"),
+                    };
+                case State.QLD:
+                    throw new NotImplementedException();
+                case State.VIC:
+                    throw new NotImplementedException();
+                case State.ACT:
+                    throw new NotImplementedException();
+                case State.NT:
+                    throw new NotImplementedException();
+                case State.SA:
+                    throw new NotImplementedException();
+                case State.WA:
+                    throw new NotImplementedException();
+                case State.TAS:
+                    throw new NotImplementedException();
+                case State.FED:
+                    throw new NotImplementedException();
             }
             throw new Exception("not a state");
         }
