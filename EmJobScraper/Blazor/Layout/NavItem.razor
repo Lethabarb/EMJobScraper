@@ -1,0 +1,27 @@
+﻿@inject NavigationManager Nav
+    <NavLink ActiveClass="active" class="nav-item" href="@Page">
+        @ChildContent
+    </NavLink>
+
+@code {
+    [Parameter]
+    public string Page { get; set; }
+
+    [Parameter]
+    public RenderFragment ChildContent { get; set; }
+
+    [Parameter]
+    public EventCallback UpdateActive { get; set; }
+
+    private string _class {
+        get {
+            return Nav.Uri.Contains(Page) ? "nav-item active" : "nav-item";
+        }
+    }
+
+    private void OnClick() {
+        if (Nav.BaseUri + Page == Nav.Uri) return;
+        Nav.NavigateTo(Page);
+        UpdateActive.InvokeAsync();
+    }
+}

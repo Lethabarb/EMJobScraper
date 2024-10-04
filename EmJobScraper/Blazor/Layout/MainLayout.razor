@@ -1,0 +1,25 @@
+﻿@using Blazor.Models
+@inherits LayoutComponentBase
+<style>
+    :root {
+    @foreach (Blazor.Models.Colors color
+        in Enum.GetValues(typeof(Blazor.Models.Colors)))
+    {
+        string variable = $"--{color.ToString()}: {color.ToHex()};";
+        @variable
+    }
+
+    }
+</style>
+
+<div class="page">
+    <div class="sidebar">
+        <NavMenu />
+    </div>
+
+    <main>
+        <article class="content px-4">
+            @Body
+        </article>
+    </main>
+</div>

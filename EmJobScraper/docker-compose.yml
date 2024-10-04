@@ -1,0 +1,8 @@
+version: '3.4'
+
+services:
+  common:
+    container_name: ${DOCKER_REGISTRY-}common
+    build:
+      context: .
+      dockerfile: Common/Dockerfile

@@ -1,0 +1,15 @@
+.nav-header {
+    color: var(--GREEN);
+    display: flex;
+    font-size: 1.2rem;
+    font-weight: bold;
+    justify-content: center;
+    align-items: center;
+    padding: 0.5rem 1.5rem;
+}
+
+.nav-content {
+    height: 100%;
+    color: var(--WHITE);
+    font-weight: bold;
+}

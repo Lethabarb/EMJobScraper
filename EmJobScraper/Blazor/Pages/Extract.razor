@@ -1,0 +1,60 @@
+﻿@page "/Extract"
+@using Blazor.Services
+@using BlazorBootstrap
+@using Microsoft.AspNetCore.SignalR.Client
+@inject ExtractorService Extractor
+
+<h3>Extract</h3>
+
+<Button @onclick="Extractor.Start">@buttText</Button>
+<Button @onclick="Refresh">Refresh</Button>
+@Extractor.ProgressPercentage
+<Progress Class="mb-3">
+    <ProgressBar Label="@Extractor.CurrentState" Width="Extractor.ProgressPercentage" Type="progressType" Color="progressColor" />
+</Progress>
+@if (Extractor.CurrentState.Contains("QLD", StringComparison.OrdinalIgnoreCase)) {
+    <div>Warning: This might take a while</div>
+}
+@foreach (string s in updates) {
+    <p>@s</p> <br />
+}
+
+
+@code {
+    private string buttText = "Start Extract";
+    private ProgressType progressType = ProgressType.StripedAndAnimated;
+    private ProgressColor progressColor = ProgressColor.Secondary;
+    private List<string> updates = new();
+    private HubConnection hub;
+    public void StartExtract() {
+        Extractor.Start();
+        StateHasChanged();
+    }
+    public void Refresh() {
+        StateHasChanged();
+    }
+    public void SimulateExtract() {
+
+    }
+    protected override async Task OnParametersSetAsync()
+    {
+        hub = new HubConnectionBuilder()
+        .WithUrl("https://localhost:32772/jobhub")
+        .Build();
+        await hub.StartAsync();
+
+        if (hub.State == HubConnectionState.Connected) {
+            Console.WriteLine("Connected");
+        } else {
+            Console.WriteLine(hub.State.GetDisplayDescription());
+        }
+
+        hub.On<string>("update", (message) =>
+        {
+            updates.Add(message);
+            Console.WriteLine(message);
+            StateHasChanged();
+        });
+
+    }
+}

@@ -1,0 +1,26 @@
+﻿<div class="nav-header">
+    <span>EM Job Scraper</span>
+</div>
+<div class="nav-content">
+    <NavItem Page="/Extract" UpdateActive="Update">
+        Extract    
+    </NavItem>
+    <NavItem Page="/Table" UpdateActive="Update">
+        Table
+    </NavItem>
+</div>
+
+@code {
+    private bool collapseNavMenu = true;
+
+    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+    private void ToggleNavMenu()
+    {
+        collapseNavMenu = !collapseNavMenu;
+    }
+
+    public void Update() {
+        StateHasChanged();
+    }
+}

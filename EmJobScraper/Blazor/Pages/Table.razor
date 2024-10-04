@@ -1,0 +1,207 @@
+﻿@page "/Table"
+@using Blazor.Services
+@using BlazorBootstrap
+@using Common.Entities
+@using CsvHelper
+@using System.Globalization
+@using CsvHelper.TypeConversion
+@inject JobsService JobsService
+@inject IJSRuntime Js
+
+<h3>Table</h3>
+
+<Button @onclick="RemoveSelectedItems">Delete</Button>
+<Button @onclick="SaveJobs">Export</Button>
+<form>
+    <InputFile OnChange="OnFileSelected"/>
+</form>
+
+<RadzenCard Variant="Variant.Outlined" class="rz-my-4">
+    <RadzenStack Orientation="Radzen.Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center" Wrap="FlexWrap.Wrap">
+        <RadzenCheckBox @bind-Value=@allowRowSelectOnRowClick Name="CheckBox1" />
+        <RadzenLabel Text="Allow row select on row click" Component="CheckBox1" />
+        <RadzenButton Text="Clear selected rows" Click="@(args => selectedJobs = null)" />
+    </RadzenStack>
+</RadzenCard>
+
+<RadzenDataGrid @ref="grid" AllowRowSelectOnRowClick="@allowRowSelectOnRowClick" AllowFiltering="true" FilterPopupRenderMode="PopupRenderMode.OnDemand" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+AllowSorting="true" Data="@jobs" ColumnWidth="200px" AllowPaging="true" PageSize="100"
+SelectionMode="DataGridSelectionMode.Multiple" @bind-Value=@selectedJobs>
+    <Columns>
+        <RadzenDataGridColumn Width="60px" Sortable="false" Filterable="false">
+            <HeaderTemplate>
+                <RadzenCheckBox TabIndex="-1" TriState="false" TValue="bool?" InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", "Select all items" }})"
+                Value="@(selectedJobs == null || selectedJobs?.Any() != true ? false : !jobs.All(i => selectedJobs.Contains(i)) ? null : jobs.Any(i => selectedJobs.Contains(i)))"
+                Change="@(args => selectedJobs = args == true ? jobs.ToList() : null)" />
+            </HeaderTemplate>
+            <Template Context="data">
+                <RadzenCheckBox TabIndex="-1" TriState="false" Value="@(selectedJobs != null && selectedJobs.Contains(data))" InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", "Select item" }})"
+                TValue="bool" Change=@(args => { if(!allowRowSelectOnRowClick) { grid.SelectRow(data); }}) />
+            </Template>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn Width="30%" Property="@nameof(Job.Title)" Title="Title" Sortable="true" Filterable="true"/>
+        <RadzenDataGridColumn Width="5%" Property="@nameof(Job.Location)" Title="Title" />
+        <RadzenDataGridColumn Width="10%" Property="@nameof(Job.State)" Title="Employee ID" />
+        <RadzenDataGridColumn Width="30%" Property="@nameof(Job.Organization)" Title="Hire Date" FormatString="{0:d}" />
+        <RadzenDataGridColumn Width="15%" Property="@nameof(Job.ClosureDate)" Title="City" />
+        <RadzenDataGridColumn Width="10%" Property="@nameof(Job.Link)" Title="Country">
+            <Template Context="data">
+                <a href="@data.Link">Link</a>
+            </Template>
+        </RadzenDataGridColumn>
+    </Columns>
+</RadzenDataGrid>
+
+<script>
+    function downloadFile(filename, content) {
+    var element = document.createElement('a');
+    element.setAttribute('href', 'data:text/csv;charset=utf-8,' + encodeURIComponent(content));
+    element.setAttribute('download', filename);
+
+    element.style.display = 'none';
+    document.body.appendChild(element);
+
+    element.click();
+
+    document.body.removeChild(element);
+    }
+</script>
+
+@code {
+    bool allowRowSelectOnRowClick = true;
+    List<Job> jobs;
+    IList<Job> selectedJobs;
+    RadzenDataGrid<Job> grid;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        jobs = JobsService.Jobs;
+    }
+
+    private async Task OnFileSelected(InputFileChangeEventArgs args)
+    {
+        var stream = new MemoryStream();
+        await args.File.OpenReadStream().CopyToAsync(stream);
+        stream.Position = 0;
+        CultureInfo cultureInfo = CultureInfo.CreateSpecificCulture("csv");
+        DateTimeFormatInfo dtfi = cultureInfo.DateTimeFormat;
+        dtfi.AbbreviatedMonthNames = new string[] 
+        {
+            "Jan", "Feb", "Mar", "Apr", "May", "June", "July", "Aug", "Sept", "Oct", "Nov", "Dec", ""
+        };
+        dtfi.AbbreviatedMonthGenitiveNames = dtfi.AbbreviatedMonthNames;
+        using (var reader = new StreamReader(stream))
+        {
+            using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
+            {
+                var options = new TypeConverterOptions { Formats = new[] { "dd MMM yyyy", "dd-MMM-yyyy", "dd-MMM-yy" }, CultureInfo = CultureInfo.InvariantCulture };
+                csv.Context.TypeConverterOptionsCache.AddOptions<DateOnly>(options);
+                csv.Context.TypeConverterOptionsCache.AddOptions<DateOnly?>(options);
+                csv.Context.TypeConverterOptionsCache.AddOptions<DateTime>(options);
+                csv.Context.TypeConverterOptionsCache.AddOptions<DateTime?>(options);
+                var records = csv.GetRecords<Job>().ToList();
+                JobsService.Jobs = records;
+                jobs = JobsService.Jobs;
+                await grid.RefreshDataAsync();
+            }
+        }
+    }
+
+
+    private async Task RemoveSelectedItems()
+    {
+        if (selectedJobs != null && selectedJobs.Count > 0)
+        {
+            // Remove selected items from jobs
+            var toRemove = selectedJobs.ToList();
+            foreach (var item in toRemove)
+            {
+                jobs.Remove(item);
+            }
+
+            await grid.RefreshDataAsync();
+            selectedJobs.Clear();
+            // Refresh the grid
+            StateHasChanged();
+        }
+    }
+
+    // private void DeleteJobs()
+    // {
+    //     JobsService.RemoveJobs(selectedJobs);
+    //     jobs = JobsService.Jobs;
+    //     grid.Data = jobs;
+    //     StateHasChanged();
+    // }
+    private void SaveJobs()
+    {
+        Js.InvokeVoidAsync("downloadFile", "unfiltered.csv", JobsService.JobsToCSVString());
+    }
+}
+
+@*<Grid TItem="Employee1"
+AllowSorting="true"
+Class="table table-hover table-bordered table-striped"
+DataProvider="EmployeesDataProvider"
+Responsive="true">
+
+    <GridColumns>
+        <GridColumn TItem="Employee1" HeaderText="Id" SortKeySelector="item => item.Id">
+            @context.Id
+        </GridColumn>
+
+        <GridColumn TItem="Employee1" HeaderText="Employee Name" SortKeySelector="item => item.Name">
+            @context.Name
+        </GridColumn>
+
+        <GridColumn TItem="Employee1" HeaderText="Designation" SortKeySelector="item => item.Designation">
+            @context.Designation
+        </GridColumn>
+
+        <GridColumn TItem="Employee1" HeaderText="DOJ" SortKeySelector="item => item.DOJ">
+            @context.DOJ
+        </GridColumn>
+
+        <GridColumn TItem="Employee1" HeaderText="Active" SortKeySelector="item => item.IsActive">
+            @context.IsActive
+        </GridColumn>
+    </GridColumns>
+
+</Grid>
+
+@code {
+    private IEnumerable<Employee1> employees = default!;
+
+    private async Task<GridDataProviderResult<Employee1>> EmployeesDataProvider(GridDataProviderRequest<Employee1> request)
+    {
+        if (employees is null) // pull employees only one time for client-side filtering, sorting, and paging
+            employees = GetEmployees(); // call a service or an API to pull the employees
+
+        return await Task.FromResult(request.ApplyTo(employees));
+    }
+
+    private IEnumerable<Employee1> GetEmployees()
+    {
+        return new List<Employee1>
+        {
+            new Employee1 { Id = 107, Name = "Alice", Designation = "AI Engineer", DOJ = new DateOnly(1998, 11, 17), IsActive = true },
+            new Employee1 { Id = 103, Name = "Bob", Designation = "Senior DevOps Engineer", DOJ = new DateOnly(1985, 1, 5), IsActive = true },
+            new Employee1 { Id = 106, Name = "John", Designation = "Data Engineer", DOJ = new DateOnly(1995, 4, 17), IsActive = true },
+            new Employee1 { Id = 104, Name = "Pop", Designation = "Associate Architect", DOJ = new DateOnly(1985, 6, 8), IsActive = false },
+            new Employee1 { Id = 105, Name = "Ronald", Designation = "Senior Data Engineer", DOJ = new DateOnly(1991, 8, 23), IsActive = true },
+            new Employee1 { Id = 102, Name = "Line", Designation = "Architect", DOJ = new DateOnly(1977, 1, 12), IsActive = true },
+            new Employee1 { Id = 101, Name = "Daniel", Designation = "Architect", DOJ = new DateOnly(1977, 1, 12), IsActive = true },
+            new Employee1 { Id = 108, Name = "Zayne", Designation = "Data Analyst", DOJ = new DateOnly(1991, 1, 1), IsActive = true },
+            new Employee1 { Id = 109, Name = "Isha", Designation = "App Maker", DOJ = new DateOnly(1996, 7, 1), IsActive = true },
+        };
+    }
+    private class Employee1 {
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public string Designation { get; set; }
+        public DateOnly DOJ { get; set; }
+        public bool IsActive { get; set; }
+    }
+}*@
